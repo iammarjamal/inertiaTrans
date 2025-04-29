@@ -1,84 +1,115 @@
 <p align="center">
-        <img src="https://banners.beyondco.de/inertiaTrans.png?theme=dark&packageManager=composer+require&packageName=iammarjamal%2Finertiatrans&pattern=architect&style=style_1&description=simple+translation+sync+between+Laravel+and+any+frontend+framework.&md=1&showWatermark=0&fontSize=150px&images=https%3A%2F%2Flaravel.com%2Fimg%2Flogomark.min.svg" width="100%" alt="inertiaTrans">
+  <img src="https://banners.beyondco.de/inertiaTrans.png?theme=dark&packageManager=composer+require&packageName=iammarjamal%2Finertiatrans&pattern=architect&style=style_1&description=simple+translation+sync+between+Laravel+and+any+frontend+framework.&md=1&showWatermark=0&fontSize=150px&images=https%3A%2F%2Flaravel.com%2Fimg%2Flogomark.min.svg"
+       alt="InertiaTrans" width="100%" />
 </p>
 
-# InertiaTrans
-inertiaTrans is a Laravel package for sync between Laravel and any frontend framework using inertia.js.
-<br /><br />
+## Overview
+**InertiaTrans** is a Laravel package that synchronizes your Laravel translation files with any JavaScript front-end framework. Continue to maintain your translations in `lang/**` as usual, and InertiaTrans will convert them into a JavaScript-friendly format on each page load.
 
-## 📌 Requirements  
-- **Laravel** `^12`  
-- **Node.js** `^20`  
-<br />
 
-## 🚀 Installation  
-You can install the package via Composer:
+## Requirements
+- **Laravel** ```^12```
+- **Node.js** ```^20```  
 
-```bash
-composer require iammarjamal/inertiatrans
-```
-<br />
 
-## 📚 Usage  
+## 🚀 Installation
 
-### 1⃣ Start Install NPM Package
-Run the following command in the terminal to install dependencies:
+1. Install via Composer:  
+   ```bash
+   composer require iammarjamal/inertiatrans
+   ```
+2. Publish and install the NPM dependencies:  
+   ```bash
+   php artisan inertiaTrans:install
+   ```
+   
 
-```bash
-php artisan inertiaTrans:install
-```
+## 📚 Usage
 
-This watcher monitors Blade files and automatically extracts translatable text into Laravel's language files.
-<br /><br />
+### 1. Add the Blade directive
 
-### 2⃣ Define Translations in Blade Files  
-You can now use `@useTheme()` and `@TransSFC()` in any Blade file within the `resources/views` directory.
-<br />
+In your main Blade layout (e.g. `resources/views/app.blade.php`), include the `@inertiaTrans` directive inside `<head>`:
 
-## ✨ Example Usage  
-```html
-<div>
-   ...
-   <p>@useTheme('hello_world')</p>
-</div>
+```blade
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+      dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-@TransSFC('ar')
-[
-   'hello_world' => 'اهلاً بالعالم',
-]
-@endTransSFC
+    <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
-@TransSFC('en')
-[
-   'hello_world' => 'Hello World',
-]
-@endTransSFC
-```
-<br />
+    @viteReactRefresh
+    @vite([
+        'resources/js/app.jsx',
+        "resources/js/pages/{$page['component']}.jsx"
+    ])
+    @inertiaHead
 
-## 🔍 How It Works  
-1. **Translating Text**:  
-   - The `@useTheme('hello_world')` directive retrieves the corresponding translation for the active language.
-   - The `@TransSFC('ar')` and `@TransSFC('en')` blocks define translations for Arabic (`ar`) and English (`en`).
-
-2. **Automatic Language File Updates**:  
-   - The watcher reads these Blade files and updates the Laravel language files.
-   - Translations are stored in `lang/[lang]/app.php` using the format `[sfc.pathBladeFile.key]`.
-<br />
-
-## 📝 Example of the Generated Language File (`lang/en/app.php`)  
-```php
-return [
-   'sfc.home.pages.index.hello_world' => 'Hello World',
-];
+    {{-- Include translations as a JS object --}}
+    @inertiaTrans
+</head>
+<body class="bg-white dark:bg-black text-gray-800 flex items-center justify-center min-h-screen p-6 lg:p-8">
+    @inertia
+</body>
+</html>
 ```
 
-This makes it easy to manage translations directly within Blade files while ensuring they are structured within Laravel's language system.
-<br /><br />
+### 2. Use translations in your front-end
 
-## Credits  
-- [iammarjamal](https://github.com/iammarjamal)
-<br /><br />
+#### React Example
 
-## License  
-The MIT License (MIT). Please see [License File](LICENSE) for more information.
+```jsx
+import { __, trans } from 'inertia-translations';
+
+export default function Welcome() {
+  return (
+    <div>
+      <h1 className="text-3xl font-bold">
+        { trans("app.HelloWorld") }
+      </h1>
+      <h1 className="text-3xl font-bold">
+        { __("app.HelloWorld") }
+      </h1>
+    </div>
+  );
+}
+```
+
+#### Vue Example
+
+```vue
+<script setup>
+import { __, trans } from 'inertia-translations';
+</script>
+
+<template>
+  <div>
+    <h1>{{ trans("app.HelloWorld") }}</h1>
+    <h1>{{ __("app.HelloWorld") }}</h1>
+  </div>
+</template>
+```
+
+## 🔍 How It Works
+
+1. **Laravel translations**  
+   - You keep your translation files in `lang/**` as usual.  
+   - The `@inertiaTrans` directive gathers them and injects a single JavaScript object into your page.
+
+2. **Caching in Production**  
+   - In `APP_ENV=production`, translations are cached for performance.  
+   - After updating any translation file, run:
+     ```bash
+     php artisan optimize:clear
+     ```
+     to clear the cache and load the latest strings.
+     
+
+## ✨ Credits
+- **Creator:** [iammarjamal](https://github.com/iammarjamal)
+
+
+## 📄 License
+This package is released under the MIT License. See the [LICENSE](LICENSE) file for details.
